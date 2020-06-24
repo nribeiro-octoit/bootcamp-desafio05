@@ -15,19 +15,23 @@ class CreateTransactionService {
   }
 
   public execute({ title, value, type }: RequestDTO): Transaction {
+    if (!['income', 'outcome'].includes(type)) {
+      throw new Error('Transaction type is invalid.');
+    }
+
+    const balance = this.transactionsRepository.getBalance();
+
+    if (type === 'outcome' && balance.total < value) {
+      throw new Error(
+        'The outcome value cannot be greater than the balance sheet total.',
+      );
+    }
+
     const transaction = this.transactionsRepository.create({
       title,
       value,
       type,
     });
-
-    const balance = this.transactionsRepository.getBalance();
-
-    if (balance.total < transaction.value) {
-      throw Error(
-        'The outcome value cannot be greater than the balance sheet total.',
-      );
-    }
 
     return transaction;
   }
